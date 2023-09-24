@@ -33,6 +33,18 @@ const getAll = async () => {
   }
 };
 
+const search = async (query) => {
+  const queryRegex = new RegExp(query, "i");
+  try {
+    const menuItems = await MenuItems.find({
+      $or: [{ name: queryRegex }, { description: queryRegex }]
+    }).exec();
+    return menuItems;
+  } catch (error) {
+    return error;
+  }
+};
+
 const getOne = async (id) => {
   try {
     const menuItem = await MenuItems.findById(id);
@@ -69,4 +81,12 @@ const deleteOne = async (id) => {
   }
 };
 
-module.exports = { getAll, getOne, create, updateOne, deleteOne, MenuItems };
+module.exports = {
+  getAll,
+  search,
+  getOne,
+  create,
+  updateOne,
+  deleteOne,
+  MenuItems
+};

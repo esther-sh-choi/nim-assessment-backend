@@ -9,6 +9,16 @@ const getAll = async (req, res) => {
   }
 };
 
+const search = async (req, res) => {
+  try {
+    const query = req.query.q;
+    const menuList = await MenuItems.search(query);
+    res.send(menuList);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+};
+
 const getOne = async (req, res) => {
   try {
     const menu = await MenuItems.getOne(req.params.id);
@@ -45,4 +55,4 @@ const deleteOne = async (req, res) => {
   }
 };
 
-module.exports = { getAll, getOne, create, updateOne, deleteOne };
+module.exports = { getAll, search, getOne, create, updateOne, deleteOne };
