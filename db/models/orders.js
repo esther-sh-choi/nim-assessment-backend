@@ -1,4 +1,5 @@
 const mongoose = require("../db.js");
+const { queryDateRange } = require("../../helpers/queryDateRange.js");
 
 const orderSchema = new mongoose.Schema({
   name: {
@@ -57,6 +58,61 @@ const getAll = async () => {
   return orders;
 };
 
+const getStatus = async (status, startDate, endDate) => {
+  try {
+    const queryCondition = {
+      status,
+      ...queryDateRange(startDate, endDate)
+    };
+
+    const orders = await Order.find(queryCondition).populate("items.item");
+    return orders;
+  } catch (error) {
+    return error;
+  }
+};
+
+const getTotalSales = async (startDate, endDate) => {
+  try {
+    const matchCondition = queryDateRange(startDate, endDate);
+
+    const result = await Order.aggregate([
+      { $match: matchCondition },
+      { $unwind: "$items" },
+      {
+        $lookup: {
+          from: "menuitems",
+          localField: "items.item",
+          foreignField: "_id",
+          as: "menuItems"
+        }
+      },
+      {
+        $project: {
+          orderId: "$_id",
+          itemTotal: {
+            $multiply: [
+              { $arrayElemAt: ["$menuItems.price", 0] },
+              "$items.quantity"
+            ]
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalSales: { $sum: "$itemTotal" }
+        }
+      }
+    ]).exec();
+
+    const totalSales = result[0] ? result[0].totalSales : 0;
+    return totalSales;
+  } catch (error) {
+    return error;
+  }
+};
+
 const getOne = async (id) => {
   const order = await Order.findById(id).populate("items.item");
   return order;
@@ -84,6 +140,8 @@ const getByStatus = async (status) => {
 
 module.exports = {
   getAll,
+  getStatus,
+  getTotalSales,
   getOne,
   create,
   update,
