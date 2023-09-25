@@ -74,10 +74,7 @@ const getStatus = async (status, startDate, endDate) => {
 
 const getTotalSales = async (startDate, endDate) => {
   try {
-    const matchCondition = {
-      status: "delivered",
-      ...queryDateRange(startDate, endDate)
-    };
+    const matchCondition = queryDateRange(startDate, endDate);
 
     const result = await Order.aggregate([
       { $match: matchCondition },

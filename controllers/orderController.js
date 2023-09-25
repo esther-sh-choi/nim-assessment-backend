@@ -23,7 +23,7 @@ const getTotalSales = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     const totalSales = await Order.getTotalSales(startDate, endDate);
-    res.send({ totalSales });
+    res.send({ total: totalSales });
   } catch (error) {
     res.status(500).send(error);
   }
