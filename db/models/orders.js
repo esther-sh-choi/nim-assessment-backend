@@ -1,4 +1,5 @@
 const mongoose = require("../db.js");
+const { queryDateRange } = require("../../helpers/queryDateRange.js");
 
 const orderSchema = new mongoose.Schema({
   name: {
@@ -57,16 +58,26 @@ const getAll = async () => {
   return orders;
 };
 
+const getStatus = async (status, startDate, endDate) => {
+  try {
+    const queryCondition = {
+      status,
+      ...queryDateRange(startDate, endDate)
+    };
+
+    const orders = await Order.find(queryCondition).populate("items.item");
+    return orders;
+  } catch (error) {
+    return error;
+  }
+};
+
 const getTotalSales = async (startDate, endDate) => {
   try {
-    let matchCondition = { status: "delivered" };
-
-    if (startDate || endDate) {
-      matchCondition.createdAt = {
-        ...(startDate && { $gte: new Date(startDate) }),
-        ...(endDate && { $lte: new Date(endDate) })
-      };
-    }
+    const matchCondition = {
+      status: "delivered",
+      ...queryDateRange(startDate, endDate)
+    };
 
     const result = await Order.aggregate([
       { $match: matchCondition },
@@ -132,6 +143,7 @@ const getByStatus = async (status) => {
 
 module.exports = {
   getAll,
+  getStatus,
   getTotalSales,
   getOne,
   create,

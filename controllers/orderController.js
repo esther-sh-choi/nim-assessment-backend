@@ -9,6 +9,16 @@ const getAll = async (req, res) => {
   }
 };
 
+const getStatus = async (req, res) => {
+  try {
+    const { s: statusQuery, startDate, endDate } = req.query;
+    const orders = await Order.getStatus(statusQuery, startDate, endDate);
+    res.send(orders);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+};
+
 const getTotalSales = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
@@ -79,6 +89,7 @@ const getByStatus = async (req, res) => {
 
 module.exports = {
   getAll,
+  getStatus,
   getTotalSales,
   getOne,
   create,
