@@ -57,6 +57,54 @@ const getAll = async () => {
   return orders;
 };
 
+const getTotalSales = async (startDate, endDate) => {
+  try {
+    let matchCondition = { status: "delivered" };
+
+    if (startDate || endDate) {
+      matchCondition.createdAt = {
+        ...(startDate && { $gte: new Date(startDate) }),
+        ...(endDate && { $lte: new Date(endDate) })
+      };
+    }
+
+    const result = await Order.aggregate([
+      { $match: matchCondition },
+      { $unwind: "$items" },
+      {
+        $lookup: {
+          from: "menuitems",
+          localField: "items.item",
+          foreignField: "_id",
+          as: "menuItems"
+        }
+      },
+      {
+        $project: {
+          orderId: "$_id",
+          itemTotal: {
+            $multiply: [
+              { $arrayElemAt: ["$menuItems.price", 0] },
+              "$items.quantity"
+            ]
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalSales: { $sum: "$itemTotal" }
+        }
+      }
+    ]).exec();
+
+    const totalSales = result[0] ? result[0].totalSales : 0;
+    return totalSales;
+  } catch (error) {
+    return error;
+  }
+};
+
 const getOne = async (id) => {
   const order = await Order.findById(id).populate("items.item");
   return order;
@@ -84,6 +132,7 @@ const getByStatus = async (status) => {
 
 module.exports = {
   getAll,
+  getTotalSales,
   getOne,
   create,
   update,
